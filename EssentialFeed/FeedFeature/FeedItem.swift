@@ -2,7 +2,7 @@
 //  FeedItem.swift
 //  EssentialFeed
 //
-//  Created by dilshodzopirov on 12/02/23.
+//  Created by dilshodzopirov on 13/02/23.
 //
 
 import Foundation
@@ -13,4 +13,3 @@ struct FeedItem {
     let location: String?
     let imageURL: URL
 }
- 
