@@ -16,7 +16,7 @@ class RemoteFeedLoaderTests: XCTestCase {
     }
     
     func test_load_requestsDataFromURL() {
-        let url = URL(string: "https://a-given-url")
+        let url = URL(string: "https://a-given-url")!
         
         let (client, sut) = makeSUT(url: url)
         
@@ -26,7 +26,7 @@ class RemoteFeedLoaderTests: XCTestCase {
     }
     
     func test_load_requestsTwiceDataFromURL() {
-        let url = URL(string: "https://a-given-url")
+        let url = URL(string: "https://a-given-url")!
         
         let (client, sut) = makeSUT(url: url)
         
@@ -50,23 +50,23 @@ class RemoteFeedLoaderTests: XCTestCase {
     
     // Mark: - Helpers
     
-    private func makeSUT(url: URL? = URL(string: "https://a-url.com")) -> (HTTPClientSpy, RemoteFeedLoader) {
+    private func makeSUT(url: URL = URL(string: "https://a-url.com")!) -> (HTTPClientSpy, RemoteFeedLoader) {
         let client = HTTPClientSpy()
         let sut = RemoteFeedLoader(url: url, client: client)
         return (client, sut)
     }
     
     private class HTTPClientSpy: HTTPClient {
-        var requestedURLs: [URL?] = []
-        var completions: [(Error) -> Void] = []
-        
-        func get(from url: URL?, completion: @escaping (Error) -> Void) {
-            completions.append(completion)
-            requestedURLs.append(url)
+        var messages: [(url: URL, completion: (Error) -> Void)] = []
+        var requestedURLs: [URL] {
+            messages.map { $0.url }
+        }
+        func get(from url: URL, completion: @escaping (Error) -> Void) {
+            messages.append((url, completion))
         }
         
         func complete(with error: Error, at index: Int = 0) {
-            completions[index](error)
+            messages[index].completion(error)
         }
     }
 }
