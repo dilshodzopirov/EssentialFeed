@@ -9,7 +9,7 @@ import XCTest
 import EssentialFeed
 
 class URLSessionHTTPClient {
-    let session: URLSession
+    private let session: URLSession
     
     init(session: URLSession = .shared) {
         self.session = session
@@ -28,7 +28,7 @@ class URLSessionHTTPClientTests: XCTestCase {
     func test_getFromURL_failsOnRequestError() {
         URLProtocolStub.startInterceptingRequests()
         let url = URL(string: "https://a-url.com")!
-        let error = NSError(domain: "Test error", code: 1)
+        let error = NSError(domain: "any error", code: 1)
         URLProtocolStub.stub(url: url, error: error)
         
         let sut = URLSessionHTTPClient()
@@ -38,6 +38,7 @@ class URLSessionHTTPClientTests: XCTestCase {
         sut.get(from: url) { result in
             switch result {
             case let .failure(receivedError as NSError):
+                let receivedError = NSError(domain: receivedError.domain, code: receivedError.code)
                 XCTAssertEqual(receivedError, error)
             default:
                 XCTFail("Expected failure with error \(error), got \(result) instead")
