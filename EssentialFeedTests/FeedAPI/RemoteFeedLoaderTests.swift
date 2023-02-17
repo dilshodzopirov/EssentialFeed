@@ -39,7 +39,7 @@ class RemoteFeedLoaderTests: XCTestCase {
     func test_load_deliversErrorOnClientError() {
         let (client, sut) = makeSUT()
         
-        expect(sut, toCompleteWith: .failure(RemoteFeedLoader.Error.connectivity)) {
+        expect(sut, toCompleteWith: failure(.connectivity)) {
             let clientError = NSError(domain: "Test", code: 1)
             client.complete(with: clientError)
         }
@@ -51,7 +51,7 @@ class RemoteFeedLoaderTests: XCTestCase {
         let samples = [199, 201, 300, 400, 500]
         
         samples.enumerated().forEach { index, code in
-            expect(sut, toCompleteWith: .failure(RemoteFeedLoader.Error.invalidData)) {
+            expect(sut, toCompleteWith: failure(.invalidData)) {
                 let json = makeItemsJSON([])
                 client.complete(withStatusCode: code, data: json, at: index)
             }
@@ -61,7 +61,7 @@ class RemoteFeedLoaderTests: XCTestCase {
     func test_load_deliversErrorOn200HTTPResponseWithInvalidJSON() {
         let (client, sut) = makeSUT()
         
-        expect(sut, toCompleteWith: .failure(RemoteFeedLoader.Error.invalidData)) {
+        expect(sut, toCompleteWith: failure(.invalidData)) {
             let invalidJSON = Data(_: "invalid json".utf8)
             client.complete(withStatusCode: 200, data: invalidJSON)
         }
@@ -123,6 +123,10 @@ class RemoteFeedLoaderTests: XCTestCase {
         return (client, sut)
     }
     
+    private func failure(_ error: RemoteFeedLoader.Error) -> RemoteFeedLoader.Result {
+        .failure(error)
+    }
+    
     private func trackForMemoryLeak(_ instance: AnyObject, file: StaticString = #filePath, line: UInt = #line) {
         addTeardownBlock { [weak instance] in
             XCTAssertNil(instance, "Instance should have been deallocated. Potential memory leak", file: file, line: line)
@@ -161,7 +165,7 @@ class RemoteFeedLoaderTests: XCTestCase {
             switch (receivedResult, expectedResult) {
             case let (.success(receivedResult), .success(expectedResult)):
                 XCTAssertEqual(receivedResult, expectedResult, file: file, line: line)
-            case let (.failure(receivedResult as RemoteFeedLoader.Error), .failure(expectedResult as RemoteFeedLoader.Error)):
+            case let (.failure(receivedResult as RemoteFeedLoader.Error), .failure(expectedResult as RemoteFeedLoader.Error )):
                 XCTAssertEqual(receivedResult, expectedResult, file: file, line: line)
             default:
                 XCTFail("Expected result \(expectedResult) got \(receivedResult) instead")
