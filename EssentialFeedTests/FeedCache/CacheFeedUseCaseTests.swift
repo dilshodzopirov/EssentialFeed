@@ -17,11 +17,12 @@ class LocalFeedLoader {
         self.currentDate = currentDate
     }
     
-    func save(_ items: [FeedItem]) {
+    func save(_ items: [FeedItem], completion: @escaping (Error?) -> Void) {
         store.deleteCacheFeed { [unowned self] error in
             if error == nil {
                 self.store.insert(items, timestamp: currentDate())
             }
+            completion(error)
         }
     }
 }
@@ -68,7 +69,7 @@ class CacheFeedUseCaseTests: XCTestCase {
         let (sut, store) = makeSUT()
         
         let items = [uniqueItem(), uniqueItem()]
-        sut.save(items)
+        sut.save(items) { _ in }
         
         XCTAssertEqual(store.receivedMessages, [.deletedCacheFeed])
     }
@@ -77,7 +78,7 @@ class CacheFeedUseCaseTests: XCTestCase {
         let (sut, store) = makeSUT()
         
         let items = [uniqueItem(), uniqueItem()]
-        sut.save(items)
+        sut.save(items) { _ in }
         
         let deletionError = anyNSError()
         store.completeWith(error: deletionError)
@@ -90,11 +91,31 @@ class CacheFeedUseCaseTests: XCTestCase {
         let (sut, store) = makeSUT(currentDate: { timestamp })
         
         let items = [uniqueItem(), uniqueItem()]
-        sut.save(items)
+        sut.save(items) { _ in }
         
         store.completeDeletionSuccessfully()
         
         XCTAssertEqual(store.receivedMessages, [.deletedCacheFeed, .insert(items, timestamp)])
+    }
+    
+    func test_save_failsOnDeletionError() {
+        let timestamp = Date()
+        let (sut, store) = makeSUT(currentDate: { timestamp })
+        let deletionError = anyNSError()
+        let items = [uniqueItem(), uniqueItem()]
+        
+        var receivedError: Error?
+        let exp = expectation(description: "Wait for completion")
+        
+        sut.save(items) { error in
+            receivedError = error
+            exp.fulfill()
+        }
+        
+        store.completeWith(error: deletionError)
+        wait(for: [exp], timeout: 1.0)
+        
+        XCTAssertEqual(receivedError as? NSError, deletionError)
     }
     
     // MARK: - Helpers
