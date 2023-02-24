@@ -12,6 +12,7 @@ class FeedStoreSpy: FeedStore {
     enum ReceivedMessage: Equatable {
         case deletedCacheFeed
         case insert([LocalFeedImage], Date)
+        case retrieve
     }
     
     var deletionCompletions: [DeletionCompletion] = []
@@ -34,6 +35,10 @@ class FeedStoreSpy: FeedStore {
     func insert(_ items: [LocalFeedImage], timestamp: Date, completion: @escaping InsertionCompletion) {
         receivedMessages.append(.insert(items, timestamp))
         insertionCompletions.append(completion)
+    }
+    
+    func retrieve() {
+        receivedMessages.append(.retrieve)
     }
 
     func completeInsertion(with error: Error, at index: Int = 0) {
